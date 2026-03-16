@@ -790,26 +790,26 @@ function deleteRow(sheetName, id) {
 // =====================================================
 // INIT
 // =====================================================
+const HARDCODED_GAS_URL = 'https://script.google.com/macros/s/AKfycbweXnjIe-dPAC6DLwJA-fX3Ndg1vKFeQoWuJ1ZEq229XVJ9fDZTzvHsPqR8xWAbIV07/exec';
+
 function init() {
+  // GAS URLは常にハードコードされたものを使う（localStorageを無視）
+  state.gasUrl = HARDCODED_GAS_URL;
+
   const saved = localStorage.getItem('soccerTeamConfig');
   if (saved) {
     const cfg = JSON.parse(saved);
-    state.gasUrl = cfg.gasUrl || 'https://script.google.com/macros/s/AKfycbweXnjIe-dPAC6DLwJA-fX3Ndg1vKFeQoWuJ1ZEq229XVJ9fDZTzvHsPqR8xWAbIV07/exec';
     state.teamName = cfg.teamName || 'FC TESORO';
   }
-  // teamName display removed - static in header
-  document.getElementById('settingTeamName').value = state.teamName;
-  document.getElementById('settingGasUrl').value = state.gasUrl;
-  document.getElementById('gasCodeText').value = GAS_CODE;
 
-  if (state.gasUrl) {
-    document.getElementById('configNotice').style.display = 'none';
-    loadData();
-  } else {
-    document.getElementById('configNotice').style.display = 'block';
-    renderEvents();
-    renderMembers();
-  }
+  const teamNameEl = document.getElementById('settingTeamName');
+  if (teamNameEl) teamNameEl.value = state.teamName;
+
+  const gasCodeEl = document.getElementById('gasCodeText');
+  if (gasCodeEl) gasCodeEl.value = GAS_CODE;
+
+  document.getElementById('configNotice').style.display = 'none';
+  loadData();
 }
 
 // =====================================================

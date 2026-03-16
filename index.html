@@ -414,6 +414,26 @@
   .pill-ng { background: rgba(192,57,43,0.15); color: #e74c3c; }
   .pill-pending { background: rgba(255,255,255,0.05); color: var(--grey); }
 
+  /* MONTH FILTER */
+  #monthFilter { scrollbar-width: none; }
+  #monthFilter::-webkit-scrollbar { display: none; }
+  .month-btn {
+    flex: 0 0 auto;
+    padding: 5px 14px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--black3);
+    color: var(--grey);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .month-btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+  .month-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold); font-weight: 700; }
+
   /* LOADING */
   .loading { text-align: center; padding: 30px; color: var(--grey); font-size: 13px; }
   .spinner {
@@ -468,13 +488,15 @@
       「設定」タブでGoogle Apps ScriptのURLを入力してください。入力後、データの読み込みが始まります。
     </div>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <div style="font-size:13px; color:var(--grey);">UPCOMING EVENTS</div>
       <div style="display:flex; gap:6px;">
         <button class="btn btn-ghost btn-sm" onclick="loadData()">更新</button>
         <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ 追加</button>
       </div>
     </div>
+
+    <div id="monthFilter" style="display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin-bottom:12px; padding-bottom:2px;"></div>
 
     <div id="eventList">
       <div class="loading"><div class="spinner"></div>読み込み中...</div>
@@ -654,9 +676,10 @@ let state = {
   teamName: 'チーム管理',
   events: [],
   members: [],
-  attendance: [], // [{eventId, memberId, status: 'ok'|'ng'|'pending'}]
+  attendance: [],
   editingEventId: null,
   editingMemberId: null,
+  selectedMonth: null,
 };
 
 // GAS CODE TEMPLATE
@@ -843,6 +866,7 @@ async function loadData() {
   state.events = data.events || [];
   state.members = data.members || [];
   state.attendance = data.attendance || [];
+  renderMonthFilter();
   renderEvents();
   renderMembers();
   showToast('更新しました');
@@ -865,9 +889,48 @@ const TYPE_LABELS = {match:'試合', practice:'練習', tournament:'大会', oth
 const TYPE_CLASSES = {match:'badge-match', practice:'badge-practice', tournament:'badge-tournament', other:'badge-other'};
 const WEEKDAYS = ['日','月','火','水','木','金','土'];
 
+function renderMonthFilter() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // get unique months from future events
+  const months = [...new Set(
+    state.events
+      .filter(ev => new Date(ev.date) >= today)
+      .map(ev => ev.date.slice(0, 7))
+  )].sort();
+
+  const container = document.getElementById('monthFilter');
+  if (months.length <= 1) { container.innerHTML = ''; return; }
+
+  const currentYear = today.getFullYear();
+  container.innerHTML = [
+    `<button class="month-btn ${state.selectedMonth === null ? 'active' : ''}" onclick="setMonthFilter(null)">すべて</button>`,
+    ...months.map(m => {
+      const [y, mo] = m.split('-');
+      const year = parseInt(y);
+      const label = year !== currentYear ? `${year}/${parseInt(mo)}月` : `${parseInt(mo)}月`;
+      return `<button class="month-btn ${state.selectedMonth === m ? 'active' : ''}" onclick="setMonthFilter('${m}')">${label}</button>`;
+    })
+  ].join('');
+}
+
+function setMonthFilter(month) {
+  state.selectedMonth = month;
+  renderMonthFilter();
+  renderEvents();
+}
+
 function renderEvents() {
   const container = document.getElementById('eventList');
-  const sorted = [...state.events].sort((a,b) => a.date < b.date ? -1 : 1);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sorted = [...state.events]
+    .filter(ev => {
+      if (new Date(ev.date) < today) return false;
+      if (state.selectedMonth && !ev.date.startsWith(state.selectedMonth)) return false;
+      return true;
+    })
+    .sort((a,b) => a.date < b.date ? -1 : 1);
   
   if (sorted.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">—</div><p>イベントがまだありません<br>「＋ 追加」で登録しましょう</p></div>`;

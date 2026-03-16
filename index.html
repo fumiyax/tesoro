@@ -503,12 +503,6 @@
         <input type="text" id="settingTeamName" placeholder="例: 有志サッカーチーム" />
       </div>
 
-      <div class="form-group">
-        <label>Google Apps Script URL</label>
-        <input type="url" id="settingGasUrl" placeholder="https://script.google.com/macros/s/.../exec" />
-        <div style="font-size:11px; color:var(--grey); margin-top:4px;">GASのウェブアプリURLを貼り付けてください</div>
-      </div>
-
       <button class="btn btn-primary" onclick="saveSettings()">設定を保存</button>
     </div>
 
@@ -1135,15 +1129,9 @@ async function deleteMember() {
 // SETTINGS
 // =====================================================
 function saveSettings() {
-  state.teamName = document.getElementById('settingTeamName').value || 'チーム管理';
-  state.gasUrl = document.getElementById('settingGasUrl').value;
-  // teamName display removed - static in header
-  localStorage.setItem('soccerTeamConfig', JSON.stringify({gasUrl: state.gasUrl, teamName: state.teamName}));
+  state.teamName = document.getElementById('settingTeamName').value || 'FC TESORO';
+  localStorage.setItem('soccerTeamConfig', JSON.stringify({teamName: state.teamName}));
   showToast('設定を保存しました');
-  if (state.gasUrl) {
-    document.getElementById('configNotice').style.display = 'none';
-    loadData();
-  }
 }
 
 // =====================================================

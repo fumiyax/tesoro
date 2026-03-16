@@ -207,25 +207,29 @@
   .att-count.ng { background: #fee2e2; color: #991b1b; }
   .att-count.pending { background: #f3f4f6; color: #6b7280; }
 
-  .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-  .player-card {
-    border: 2px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 10px 10px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 13px;
-    background: white;
-    transition: all 0.15s;
+  .att-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .att-table th {
+    text-align: center;
+    padding: 7px 8px;
+    font-size: 12px;
+    color: var(--grey);
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 700;
   }
-  .player-card.ok { border-color: #34d399; background: #f0fdf4; }
-  .player-card.ng { border-color: #f87171; background: #fff5f5; }
-  .player-card-name { font-weight: 700; }
-  .player-card-btns { display: flex; gap: 5px; }
+  .att-table th.name-col { text-align: left; }
+  .att-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .att-table td.name-col { text-align: left; font-weight: 600; font-size: 13px; }
+  .att-table tr.row-ok { background: #f0fdf4; }
+  .att-table tr.row-ng { background: #fff5f5; }
+  .att-table tr:last-child td { border-bottom: none; }
   .att-btn {
-    flex: 1;
-    padding: 5px 0;
+    width: 34px;
+    height: 30px;
     border-radius: 6px;
     border: 1.5px solid #e5e7eb;
     background: white;
@@ -233,10 +237,28 @@
     cursor: pointer;
     transition: all 0.15s;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  .att-btn.selected-ok { border-color: #34d399; background: #d1fae5; }
-  .att-btn.selected-ng { border-color: #f87171; background: #fee2e2; }
-  .att-btn:hover { transform: scale(1.1); }
+  .att-btn.selected-ok { border-color: #34d399; background: #d1fae5; box-shadow: 0 0 0 2px #34d39940; }
+  .att-btn.selected-ng { border-color: #f87171; background: #fee2e2; box-shadow: 0 0 0 2px #f8717140; }
+  .att-btn.selected-pending { border-color: #9ca3af; background: #f3f4f6; box-shadow: 0 0 0 2px #9ca3af40; }
+  .att-btn:hover { transform: scale(1.12); }
+  .comment-th { text-align: left; min-width: 120px; }
+  .comment-col { min-width: 120px; }
+  .comment-input {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #1a2e1e;
+    background: white;
+    transition: border-color 0.2s;
+  }
+  .comment-input:focus { outline: none; border-color: var(--green-light); }
 
   /* FORMS */
   .form-group { margin-bottom: 14px; }
@@ -730,7 +752,7 @@ function getOrCreateSheet(name) {
     const headers = {
       events: ['id','date','type','title','location','time','fileUrl','note'],
       members: ['id','name','grade','parent'],
-      attendance: ['eventId','memberId','status'],
+      attendance: ['eventId','memberId','status','comment'],
     };
     sh.appendRow(headers[name] || ['id']);
   }
@@ -776,8 +798,9 @@ function setAttendance(data) {
   const existing = rows.slice(1).findIndex(r => r[0] == data.eventId && r[1] == data.memberId);
   if (existing >= 0) {
     sh.getRange(existing + 2, 3).setValue(data.status);
+    sh.getRange(existing + 2, 4).setValue(data.comment || '');
   } else {
-    sh.appendRow([data.eventId, data.memberId, data.status]);
+    sh.appendRow([data.eventId, data.memberId, data.status, data.comment || '']);
   }
   return {ok: true};
 }
@@ -920,7 +943,7 @@ function renderEvents() {
             <div class="att-count ng">❌ 欠席 ${att.ng}人</div>
             <div class="att-count pending">❓ 未回答 ${att.pending}人</div>
           </div>
-          <div class="player-grid" id="playergrid-${evIdSafe}">
+          <div id="playergrid-${evIdSafe}">
             ${renderPlayerCards(evIdSafe)}
           </div>
         </div>
@@ -954,18 +977,40 @@ function getAttendanceSummary(eventId) {
 
 function renderPlayerCards(eventId) {
   if (state.members.length === 0) return '<div style="font-size:12px;color:var(--grey);">メンバーが登録されていません</div>';
-  return state.members.map(m => {
+  const rows = state.members.map(m => {
     const att = state.attendance.find(a => a.eventId == eventId && a.memberId == m.id);
     const status = att ? att.status : 'pending';
-    return `<div class="player-card ${status}">
-      <div class="player-card-name">${m.name}</div>
-      <div class="player-card-btns">
-        <button class="att-btn ${status === 'ok' ? 'selected-ok' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ok')" title="参加">✅</button>
-        <button class="att-btn ${status === 'ng' ? 'selected-ng' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ng')" title="欠席">❌</button>
-        <button class="att-btn ${status === 'pending' ? '' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','pending')" title="未定" style="${status === 'pending' ? 'border-color:#9ca3af;background:#f3f4f6;' : ''}">❓</button>
-      </div>
-    </div>`;
+    const comment = att ? (att.comment || '') : '';
+    const rowClass = status === 'ok' ? 'row-ok' : status === 'ng' ? 'row-ng' : '';
+    return `<tr class="${rowClass}">
+      <td class="name-col">${m.name}</td>
+      <td><button class="att-btn ${status === 'ok' ? 'selected-ok' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ok')">✅</button></td>
+      <td><button class="att-btn ${status === 'ng' ? 'selected-ng' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ng')">❌</button></td>
+      <td><button class="att-btn ${status === 'pending' ? 'selected-pending' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','pending')">❓</button></td>
+      <td class="comment-col">
+        <input type="text" class="comment-input" placeholder="コメント..." value="${comment.replace(/"/g,'&quot;')}"
+          onchange="saveComment('${eventId}','${m.id}',this.value)"
+          onclick="event.stopPropagation()" />
+      </td>
+    </tr>`;
   }).join('');
+  return `<table class="att-table">
+    <thead><tr>
+      <th class="name-col">名前</th>
+      <th>✅ 参加</th>
+      <th>❌ 欠席</th>
+      <th>❓ 未定</th>
+      <th class="comment-th">コメント</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function saveComment(eventId, memberId, comment) {
+  const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
+  if (att) att.comment = comment;
+  else state.attendance.push({eventId, memberId, status: 'pending', comment});
+  gasRequest({action: 'setAttendance', eventId, memberId, status: att ? att.status : 'pending', comment});
 }
 
 async function setAttendanceUI(eventId, memberId, status) {

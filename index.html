@@ -207,22 +207,36 @@
   .att-count.ng { background: #fee2e2; color: #991b1b; }
   .att-count.pending { background: #f3f4f6; color: #6b7280; }
 
-  .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+  .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
   .player-card {
     border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 8px 10px;
+    border-radius: 10px;
+    padding: 10px 10px 8px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 8px;
     font-size: 13px;
     background: white;
-    cursor: pointer;
     transition: all 0.15s;
   }
   .player-card.ok { border-color: #34d399; background: #f0fdf4; }
   .player-card.ng { border-color: #f87171; background: #fff5f5; }
-  .player-card .att-icon { font-size: 16px; }
+  .player-card-name { font-weight: 700; }
+  .player-card-btns { display: flex; gap: 5px; }
+  .att-btn {
+    flex: 1;
+    padding: 5px 0;
+    border-radius: 6px;
+    border: 1.5px solid #e5e7eb;
+    background: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .att-btn.selected-ok { border-color: #34d399; background: #d1fae5; }
+  .att-btn.selected-ng { border-color: #f87171; background: #fee2e2; }
+  .att-btn:hover { transform: scale(1.1); }
 
   /* FORMS */
   .form-group { margin-bottom: 14px; }
@@ -872,15 +886,16 @@ function renderEvents() {
     
     const att = getAttendanceSummary(ev.id);
     
+    const evIdSafe = ev.id;
     return `
-    <div class="event-item" id="evitem-${ev.id}" onclick="toggleEvent('${ev.id}')">
-      <div class="event-header">
+    <div class="event-item" id="evitem-${evIdSafe}">
+      <div class="event-header" onclick="toggleEvent('${evIdSafe}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;">
         <div class="event-date">
           <div class="month">${month}</div>
           <div class="day" style="${wdClass}">${day}</div>
           <div class="weekday" style="${wdClass}">(${wd})</div>
         </div>
-        <div class="event-info">
+        <div class="event-info" style="flex:1;min-width:0;">
           <div class="event-title">${ev.title || '（タイトルなし）'}</div>
           <div class="event-meta">${ev.location || '場所未定'}${ev.time ? ' / ' + ev.time : ''}</div>
           <div style="margin-top:4px;">
@@ -890,6 +905,7 @@ function renderEvents() {
             </span>
           </div>
         </div>
+        <div style="color:var(--grey);font-size:20px;padding-right:4px;transition:transform 0.2s;" class="chevron-${evIdSafe}">›</div>
       </div>
       <div class="event-detail">
         ${ev.location ? `<div class="event-detail-row"><span class="event-detail-label">📍 場所</span><span class="event-detail-value">${ev.location}</span></div>` : ''}
@@ -904,13 +920,14 @@ function renderEvents() {
             <div class="att-count ng">❌ 欠席 ${att.ng}人</div>
             <div class="att-count pending">❓ 未回答 ${att.pending}人</div>
           </div>
-          <div class="player-grid">
-            ${renderPlayerCards(ev.id)}
+          <div class="player-grid" id="playergrid-${evIdSafe}">
+            ${renderPlayerCards(evIdSafe)}
           </div>
         </div>
 
-        <div style="text-align:right; margin-top:12px;">
-          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openEventModal('${ev.id}')">✏ 編集</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+          <button class="btn btn-ghost btn-sm" onclick="toggleEvent('${evIdSafe}')">▲ 閉じる</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEventModal('${evIdSafe}')">✏ 編集</button>
         </div>
       </div>
     </div>`;
@@ -920,6 +937,10 @@ function renderEvents() {
 function toggleEvent(id) {
   const el = document.getElementById('evitem-' + id);
   el.classList.toggle('expanded');
+  const chevrons = el.querySelectorAll('[class*="chevron-"]');
+  chevrons.forEach(c => {
+    c.style.transform = el.classList.contains('expanded') ? 'rotate(90deg)' : '';
+  });
 }
 
 function getAttendanceSummary(eventId) {
@@ -936,25 +957,39 @@ function renderPlayerCards(eventId) {
   return state.members.map(m => {
     const att = state.attendance.find(a => a.eventId == eventId && a.memberId == m.id);
     const status = att ? att.status : 'pending';
-    const icons = {ok:'✅', ng:'❌', pending:'❓'};
-    return `<div class="player-card ${status}" onclick="event.stopPropagation(); cycleAttendance('${eventId}','${m.id}')">
-      <span>${m.name}</span>
-      <span class="att-icon">${icons[status]}</span>
+    return `<div class="player-card ${status}">
+      <div class="player-card-name">${m.name}</div>
+      <div class="player-card-btns">
+        <button class="att-btn ${status === 'ok' ? 'selected-ok' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ok')" title="参加">✅</button>
+        <button class="att-btn ${status === 'ng' ? 'selected-ng' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ng')" title="欠席">❌</button>
+        <button class="att-btn ${status === 'pending' ? '' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','pending')" title="未定" style="${status === 'pending' ? 'border-color:#9ca3af;background:#f3f4f6;' : ''}">❓</button>
+      </div>
     </div>`;
   }).join('');
 }
 
-async function cycleAttendance(eventId, memberId) {
+async function setAttendanceUI(eventId, memberId, status) {
   const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
-  const cur = att ? att.status : 'pending';
-  const next = cur === 'pending' ? 'ok' : cur === 'ok' ? 'ng' : 'pending';
-  
-  if (att) att.status = next;
-  else state.attendance.push({eventId, memberId, status: next});
-  
-  renderEvents(); // re-render
-  // persist
-  gasRequest({action: 'setAttendance', eventId, memberId, status: next});
+  if (att) att.status = status;
+  else state.attendance.push({eventId, memberId, status});
+
+  // partial re-render: just the grid and summary, don't collapse
+  const grid = document.getElementById('playergrid-' + eventId);
+  if (grid) grid.innerHTML = renderPlayerCards(eventId);
+
+  // update summary counts in the item
+  const att2 = getAttendanceSummary(eventId);
+  const item = document.getElementById('evitem-' + eventId);
+  if (item) {
+    item.querySelector('.att-count.ok').textContent = '✅ 参加 ' + att2.ok + '人';
+    item.querySelector('.att-count.ng').textContent = '❌ 欠席 ' + att2.ng + '人';
+    item.querySelector('.att-count.pending').textContent = '❓ 未回答 ' + att2.pending + '人';
+    // update header summary too
+    const headerSummary = item.querySelector('.event-info span[style]');
+    if (headerSummary) headerSummary.textContent = `✅${att2.ok} ❌${att2.ng} ❓${att2.pending}`;
+  }
+
+  gasRequest({action: 'setAttendance', eventId, memberId, status});
 }
 
 // =====================================================

@@ -1,399 +1,3 @@
-
-子供のサッカークラブとは別に有志で活動しています。日程、大会情報、大会情報ファイル、子供の名前、参加可否を確認できるようなWebアプリが作りたいです。利用者は15人程度です。Githubにおいてやりたいです。
-
-Mar 13
-いくつか確認させてください！
-
-どんなアプリにするか決めるために教えてください。
-
-選択肢を選んで教えていただけますか？
-
-ログイン方法：パスワードなし（URL知ってる人だけ）/ 共通パスワード1つ / Googleログイン
-データ保存：Supabase（前回と同様・無料）/ Googleスプレッドシート連携 / まだ決めていない
-大会情報ファイル：PDF / 画像（JPG/PNG）/ Excel / リンク（URL）のみ
-Q: ログイン・認証はどうしますか？
-A: パスワードなし（URLを知っている人なら誰でも）
-
-Q: バックエンド（データ保存）はどうしますか？
-A: Googleスプレッドシート連携
-
-Q: 大会情報ファイルはどんな形式を想定していますか？（該当するものをすべて選択）
-A: Google Driveにファイルはおいてそのリンクを貼るだけでOK
-
-Mar 13
-わかりました！構成が決まりました。
-
-技術スタック：
-
-フロントエンド：HTML/JS（シングルファイル）→ GitHub Pages
-データ：Google スプレッドシート（GAS経由でAPI化）
-ファイル：Google Drive リンクを貼るだけ
-認証：なし（URLのみ）
-まずフロントエンドのHTMLを作り、次にGoogle Apps Script（GAS）のセットアップ手順を説明します。
-
-
-Viewed a file, created a file, read a file
-Viewed a file, created a file, read a file
-完成しました！ダウンロードして試せます。
-
-機能概要
-📅 日程・参加タブ
-
-イベント一覧（試合・練習・大会・その他）
-タップで展開 → 場所・時間・資料リンク・メモ表示
-メンバーカードをタップするだけで参加状況を切り替え（❓→✅→❌→❓）
-👦 メンバータブ
-
-子供の名前・学年・保護者名を登録
-🔧 設定タブ
-
-チーム名・GAS URLを設定
-GitHub Pages + Google Sheets セットアップ手順
-① GitHubにリポジトリ作成
-
-新規リポジトリ → index.html をアップロード
-Settings → Pages → Branch: main → / (root) → Save
-② Googleスプレッドシート + GASの設定
-
-新しいスプレッドシートを作成
-「拡張機能」→「Apps Script」を開く
-アプリ内の「設定」タブ→「GASコード」からコードをコピーして貼り付け
-「デプロイ」→「新しいデプロイ」→「ウェブアプリ」→アクセス：全員
-発行されたURLをアプリの「設定」タブに入力して保存
-③ 完了！ スプレッドシートにシート（events/members/attendance）が自動作成されます。
-
-何か追加したい機能（コメント欄・出欠のLINE通知・月カレンダー表示など）があれば教えてください！
-
-Index
-Code · HTML 
-ありがとう
-年間の日程だけでも先に入れたかったりするけどそれはSpread Sheet上に入れちゃえば良い？
-
-Mar 15
-はい、そのままスプレッドシートに直接入れるのが一番早いです！
-
-eventsシートの列順
-
-id | date | type | title | location | time | fileUrl | note
-入力例：
-
-1748736000000 | 2025-06-01 | match | 有志練習試合 vs ○○FC | 世田谷公園 | 09:00〜12:00 | |
-ポイント
-
-id は重複しなければ何でもOK（連番 1, 2, 3… でも大丈夫です）
-date は 2025-06-01 形式で入力
-type は match / practice / tournament / other のいずれか
-fileUrl と note は空欄でOK
-まとめて入れたい場合はスプレッドシートが断然楽なので、年間分をドーンと入力してしまってください。アプリ側から「🔄 更新」ボタンを押せばそのまま反映されます。
-
-ちょっとやってみる
-
-Mar 15
-ぜひ！やってみて何かあれば気軽に聞いてください 😊
-
-詰まりやすいポイントとしてはGASのデプロイ時に「アクセスできるユーザー」を全員にするのを忘れがちなので、そこだけ注意を。
-
-この画面で参加、欠席を選べるようにして欲しいのとクリックした瞬間前の画面に戻る仕様をやめて欲しい。で前の画面に戻るボタンは欲しい。
-
-7:48 AM
-了解です！2点ですね。
-
-参加/欠席を選ぶUI → タップのたびに変わる方式をやめて、✅❌ボタンを並べて選ぶ形に
-クリックで閉じない → 展開したまま維持、「閉じる」ボタンを追加
-修正します！
-
-
-Viewed 4 files
-Viewed 4 files
-変更箇所が明確になりました。修正します。
-
-
-Edited 4 files
-Edited 4 files
-次に参加/欠席ボタンUIを更新します。
-
-
-Edited a file, read a file
-Edited a file, read a file
-修正しました！変更点まとめ：
-
-参加確認 → タップで循環する方式をやめて、✅❌❓の3つのボタンを並べて明示的に選択する形に
-展開したまま維持 → ボタンを押しても画面が閉じなくなりました（参加状況はその場で更新）
-▲ 閉じるボタン → 詳細の一番下に追加
-ヘッダー部分タップ → 展開/折りたたみ、› が回転して状態を視覚的に表示
-Index
-Code · HTML 
-index.htmlを置き換えるとこれまで入れていたメンバーがundefinedになるんだけど
-
-7:54 AM
-スプレッドシートのデータはそのまま残っているはずなので、アプリ側の読み込み問題だと思います。
-
-現在のindex.htmlで「🔄 更新」ボタンを押したときにどうなりますか？それともGitHubにアップした直後からundefinedになっていますか？
-
-また、スプレッドシートのmembersシートを確認して、データは残っていますか？
-
-更新ボタンを押しても変わらない。Githubにアップしたときからundefinedです。spread sheetにはデータが残っています。がさっき消しました
-
-7:56 AM
-GASのコードに問題がある可能性が高いです。デバッグしましょう。
-
-ブラウザで以下のURLを直接開いてみてください：
-
-[GASのURL]?action=getAll
-どんな結果が返ってきますか？ members の中身を見せてもらえると原因がわかります。
-
-あと、スプレッドシートのmembersシートの**1行目（ヘッダー行）**は以下になっていますか？
-
-id | name | grade | parent
-手動で入れた場合、ヘッダーが違うとundefinedになります。
-
-{"events":[],"members":[],"attendance":[]}
-7:58 AM
-membersが空配列で返ってきているので、スプレッドシートのデータがGASから見えていない状態です。
-
-確認してほしいのですが、GASのスクリプトはどのスプレッドシートに紐づいていますか？
-
-よくあるパターンとして、新しくデプロイし直したときに別のスプレッドシートのGASになっていることがあります。
-
-GASエディタを開いて、左上に表示されているプロジェクト名やスプレッドシート名を確認してみてください。データが入っているスプレッドシートのGASかどうかが重要です。
-
-attendanceの列はどうしておけば良い？
-
-9:27 AM
-attendanceシートのヘッダー行はこれです：
-
-eventId | memberId | status
-ただ、GASが自動で作るので基本は手動で触らなくてOKです。
-
-今の問題（membersが空）はスプレッドシートとGASの紐づけが怪しいので、まずGASエディタで確認してみてください。GASエディタ上部の「スプレッドシートを開く」アイコンがあれば、それをクリックしてどのシートが開くか見てみると分かります。
-
-GASがヘッダーを入れてくれない場合は手動で入れたら良い？
-
-9:38 AM
-はい、手動で入れてOKです！
-
-各シートの1行目にそのまま貼り付けてください：
-
-eventsシート：id	date	type	title	location	time	fileUrl	note
-membersシート：id	name	grade	parent
-attendanceシート：eventId	memberId	status
-タブ区切りなのでそのままスプレッドシートに貼り付けるとA1〜各列に綺麗に入ります。
-
-ヘッダーが入ったら「🔄 更新」で読み込めるはずです！
-
-参加確認画面は表形式にしてもらったも良い？名前が縦に並ぶようなイメージ。選択肢が３つあるのはそのままで大丈夫
-
-9:40 AM
-了解です！こんなイメージですね：
-
-名前	✅	❌	❓
-そうし	○		
-さくと		○	
-修正します！
-
-
-Edited 2 files, viewed a file
-Edited 2 files, viewed a file
-あわせて、グリッドのdivをtableに対応させます。
-
-
-Edited a file, read a file
-Edited a file, read a file
-表形式に変更しました！名前が縦に並んで、✅❌❓のボタンが各行に横並びになっています。選択中のボタンはハイライトされて、行の背景色も参加/欠席で色が変わります。
-
-Index
-Code · HTML 
-ありがとう
-
-9:41 AM
-どういたしまして！うまく動いたら嬉しいです⚽
-
-GASとスプレッドシートの紐づけ問題が解決したらメンバーも正常に表示されるはずなので、引き続き試してみてください。何かあればまた気軽に！
-
-追加で誰かが連れていってくれるならありがたいとかいうコメントもたまにあるのでそれぞれの人の一番右にコメント欄も欲しいです
-
-9:42 AM
-了解です！表の一番右にコメント欄を追加します。
-
-
-Viewed a file, edited a file
-Viewed a file, edited a file
-次にCSSとGASコードにcommentを追加します。
-
-
-Add comment column CSS
-Add comment column CSS
-最後にGASコードのattendanceにcomment列を追加します。
-
-
-Edited 2 files, read a file
-Edited 2 files, read a file
-追加しました！
-
-表の一番右に「コメント」列が入り、入力欄に自由にテキストを書けます。入力後フォーカスを外すと自動保存されてスプレッドシートに反映されます。
-
-注意点： attendanceシートのヘッダーに comment 列を手動で追加してください（D1セルに comment）。GASコードも更新されているので再デプロイも忘れずに。
-
-Index
-Code · HTML 
-チーム管理と書いているところをFC TESORO SCHEDULEに変えて欲しい
-あとロゴを添付の画像にして
-なるべく絵文字はなくして子どもっぽくせずで
-HPがhttps://sites.google.com/view/tesoro2024/home　なのでこれとテイストをあわせて欲しいです
-
-10:00 AM
-まずHPを確認します！
-
-
-Searched the web
-Searched the web
-New Club Emblem Announcement | News | FC Tokyo Official Website
-
-fctokyo.co.jp
-All-New Logo: FC Tokyo 2024 Home & Away Kits Released - Footy Headlines
-
-footyheadlines.com
-Image unavailable
-Results from the web
-HPはシンプルで落ち着いたトーン、ロゴは黒×白のエレガントなデザインですね。全体を黒ベース・ゴールドアクセントの大人っぽいデザインに刷新します！
-
-
-Viewed 2 files
-Viewed 2 files
-全体像を把握しました。黒×ゴールドの格調あるデザインに全面刷新します。
-
-
-Ran 3 commands, viewed a file
-Ran 3 commands, viewed a file
-全体像を把握しました。CSSを黒×ゴールドに全面書き換え、ヘッダーも刷新します。
-
-
-Full CSS redesign to black/gold theme matching FC Tesoro branding
-Full CSS redesign to black/gold theme matching FC Tesoro branding
-次にヘッダーのHTMLを更新します。
-
-
-Ran 2 commands
-Ran 2 commands
-あとは絵文字を除去して、ラベルテキストを整えます。
-
-
-Ran 2 commands, read a file
-Ran 2 commands, read a file
-全面リデザインしました！
-
-変更内容：
-
-黒背景 × ゴールドアクセントの配色に統一
-ロゴ画像をヘッダーに表示（FC TESORO SCHEDULE）
-絵文字をすべて除去、英語・日本語のシンプルなラベルに
-バッジ・ボタン・テーブル・モーダルすべてダークテーマに
-参加○ / 欠席× / 未定? の記号表記でスッキリ
-GitHubにそのままアップロードすればOKです！
-
-Index
-Code · HTML 
-ロゴはどうすれば良い？
-
-10:35 AM
-ロゴ画像はHTMLファイルの中にBase64で埋め込み済みなので、特に何もしなくてOKです。
-
-index.html 単体でロゴが表示されます。GitHubにこのファイルだけアップロードすれば完結します。
-
-これを使ってくれてる？
-
-10:37 AM
-使っています！ただロゴの背景が黒なので、ヘッダーも黒背景のため見えにくくなっている可能性があります。
-
-現在のコードでは filter: brightness(0) invert(1) という処理をしていて、これが画像を白に変換してしまっています。
-
-この画像はもともと黒背景に白のロゴなので、フィルターを外してそのまま表示する方が自然です。修正します。
-
-
-Edited a file, read a file
-Edited a file, read a file
-フィルターを外しました。黒背景に黒ロゴなのでそのまま馴染む形になります。もし「もう少し大きくしたい」「丸く切り抜きたい」などあれば言ってください！
-
-Index
-Code · HTML 
-ロゴをいれているところのコード教えて
-
-10:38 AM
-HTMLのヘッダー部分です：
-
-html
-<img class="logo-img" src="data:image/png;base64,{base64の長い文字列...}" alt="FC TESORO" />
-実際のファイルでは data:image/png;base64, の後に約52,000文字のBase64文字列が続いています。これがロゴ画像そのものです。
-
-CSSはこちら：
-
-css
-.logo-img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-}
-サイズを変えたい場合はここの 44px を変えるだけです。
-
-base64ってなに？
-
-10:40 AM
-画像ファイルをテキスト文字列に変換したものです。
-
-通常、ウェブサイトで画像を表示するには：
-
-html
-<img src="logo.png" />
-のように別ファイルを参照します。この場合 logo.png というファイルが別途必要です。
-
-Base64を使うと：
-
-html
-<img src="data:image/png;base64,iVBORw0KGgo..." />
-のように画像データ自体をHTMLに埋め込めるので、ファイルが index.html 一つで完結します。
-
-今回のアプリでこの方式を使っているのは、GitHubにindex.htmlだけ置けばロゴも含めて動くようにするためです。別途 logo.png をアップロードする手間がなくなります。
-
-ただし欠点としてHTMLファイルのサイズが大きくなります（今回は約52KB分ロゴが埋め込まれています）。
-
-githubのロゴをおこうか？
-
-10:40 AM
-それが一番シンプルでいいと思います！
-
-手順：
-
-GitHubのリポジトリに logo.png をアップロード
-HTMLの src を以下に変更するだけです
-html
-<img class="logo-img" src="logo.png" alt="FC TESORO" />
-やってみますか？そうすればBase64の長い文字列が消えてHTMLもスッキリします。ファイルをアップロードしたら教えてください、コードを修正します！
-
-やってみて
-
-10:40 AM
-では修正します！
-
-
-Edited a file, viewed a file, ran a command
-Edited a file, viewed a file, ran a command
-修正しました！コードはこうなっています：
-
-html
-<img class="logo-img" src="logo.png" alt="FC TESORO" />
-GitHubにアップするときは index.html と logo.png の2ファイルを同じリポジトリのルートに置く だけでOKです。ロゴのファイル名は必ず logo.png にしてください。
-
-Index
-Code · HTML 
-
-
-
-
-
-Claude is AI and can make mistakes. Please double-check responses.
-Index · HTML
-Copy
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -402,7 +6,7 @@ Copy
 <title>FC TESORO SCHEDULE</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Bebas+Neue&family=Cormorant+Garamond:wght@600;700&display=swap');
- 
+
   :root {
     --black: #0a0a0a;
     --black2: #111111;
@@ -420,16 +24,16 @@ Copy
     --ok: #2ecc71;
     --shadow: 0 4px 20px rgba(0,0,0,0.4);
   }
- 
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
   body {
     font-family: 'Noto Sans JP', sans-serif;
     background: var(--black);
     color: var(--white);
     min-height: 100vh;
   }
- 
+
   /* HEADER */
   header {
     background: var(--black2);
@@ -483,7 +87,7 @@ Copy
     transition: all 0.2s;
   }
   .btn-admin:hover { background: var(--gold-dark); color: var(--black); }
- 
+
   /* NAV TABS */
   nav {
     background: var(--black3);
@@ -514,14 +118,14 @@ Copy
     color: var(--white);
     background: rgba(255,255,255,0.03);
   }
- 
+
   /* MAIN */
   main { padding: 16px; max-width: 800px; margin: 0 auto; }
- 
+
   /* SECTION */
   .section { display: none; }
   .section.active { display: block; }
- 
+
   /* CARDS */
   .card {
     background: var(--card);
@@ -538,7 +142,7 @@ Copy
     letter-spacing: 2px;
     text-transform: uppercase;
   }
- 
+
   /* EVENT LIST */
   .event-item {
     border: 1px solid var(--border);
@@ -579,7 +183,7 @@ Copy
   .badge-practice { background: rgba(46,204,113,0.1); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
   .badge-tournament { background: rgba(155,89,182,0.15); color: #bb8fce; border: 1px solid rgba(155,89,182,0.3); }
   .badge-other { background: rgba(255,255,255,0.05); color: var(--grey); border: 1px solid var(--border); }
- 
+
   /* EVENT DETAIL */
   .event-detail { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
   .event-item.expanded .event-detail { display: block; }
@@ -588,7 +192,7 @@ Copy
   .event-detail-value { color: var(--white); flex: 1; word-break: break-all; }
   .event-detail-value a { color: var(--gold); text-decoration: none; }
   .event-detail-value a:hover { color: var(--gold-light); }
- 
+
   /* ATTENDANCE */
   .attendance-section { margin-top: 14px; }
   .attendance-title { font-size: 10px; font-weight: 700; color: var(--gold); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
@@ -604,7 +208,7 @@ Copy
   .att-count.ok { border-color: rgba(46,204,113,0.4); color: #2ecc71; background: rgba(46,204,113,0.08); }
   .att-count.ng { border-color: rgba(192,57,43,0.4); color: #e74c3c; background: rgba(192,57,43,0.08); }
   .att-count.pending { border-color: var(--border); color: var(--grey); }
- 
+
   .att-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .att-table th {
     text-align: center;
@@ -660,7 +264,7 @@ Copy
   }
   .comment-input::placeholder { color: #555; }
   .comment-input:focus { outline: none; border-color: var(--gold-dark); }
- 
+
   /* FORMS */
   .form-group { margin-bottom: 14px; }
   label { display: block; font-size: 10px; font-weight: 700; color: var(--gold); margin-bottom: 6px; letter-spacing: 1.5px; text-transform: uppercase; }
@@ -679,7 +283,7 @@ Copy
   input::placeholder, textarea::placeholder { color: #555; }
   select option { background: var(--black3); }
   textarea { resize: vertical; min-height: 70px; }
- 
+
   .btn {
     padding: 10px 20px;
     border-radius: 3px;
@@ -698,7 +302,7 @@ Copy
   .btn-sm { font-size: 11px; padding: 6px 12px; }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--grey-light); }
   .btn-ghost:hover { border-color: var(--gold-dark); color: var(--gold); }
- 
+
   /* MEMBER LIST */
   .member-item {
     display: flex;
@@ -712,7 +316,7 @@ Copy
   }
   .member-name { font-weight: 700; font-size: 14px; color: var(--white); }
   .member-meta { font-size: 12px; color: var(--grey); margin-top: 2px; }
- 
+
   /* OVERLAY */
   .overlay {
     display: none;
@@ -746,7 +350,7 @@ Copy
   }
   .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
   .modal-actions .btn { flex: 1; }
- 
+
   /* SETTINGS */
   .settings-row {
     display: flex;
@@ -757,7 +361,7 @@ Copy
     font-size: 14px;
   }
   .settings-row:last-child { border-bottom: none; }
- 
+
   /* TOAST */
   .toast {
     position: fixed;
@@ -776,7 +380,7 @@ Copy
     white-space: nowrap;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
- 
+
   /* CONFIG NOTICE */
   .config-notice {
     background: rgba(201,168,76,0.08);
@@ -797,18 +401,18 @@ Copy
     font-size: 12px;
     color: var(--gold);
   }
- 
+
   /* EMPTY STATE */
   .empty-state { text-align: center; padding: 40px 20px; color: var(--grey); }
   .empty-state .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
   .empty-state p { font-size: 13px; line-height: 1.8; }
- 
+
   /* STATUS PILL */
   .status-pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; margin-left: 6px; }
   .pill-ok { background: rgba(46,204,113,0.15); color: #2ecc71; }
   .pill-ng { background: rgba(192,57,43,0.15); color: #e74c3c; }
   .pill-pending { background: rgba(255,255,255,0.05); color: var(--grey); }
- 
+
   /* LOADING */
   .loading { text-align: center; padding: 30px; color: var(--grey); font-size: 13px; }
   .spinner {
@@ -820,10 +424,10 @@ Copy
     margin: 0 auto 10px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
- 
+
   .row { display: flex; gap: 8px; }
   .row .form-group { flex: 1; }
- 
+
   @media (max-width: 480px) {
     .logo-text { font-size: 16px; }
     .logo-img { width: 36px; height: 36px; }
@@ -831,7 +435,7 @@ Copy
 </style>
 </head>
 <body>
- 
+
 <!-- HEADER -->
 <header>
   <div class="header-inner">
@@ -852,17 +456,17 @@ Copy
     <div class="tab" onclick="showTab('settings')" id="tab-settings">CONFIG</div>
   </nav>
 </header>
- 
+
 <main>
- 
+
   <!-- ======================== SCHEDULE TAB ======================== -->
   <section class="section active" id="section-schedule">
- 
+
     <div id="configNotice" class="config-notice" style="display:none">
       <strong>SETUP REQUIRED</strong>
       「設定」タブでGoogle Apps ScriptのURLを入力してください。入力後、データの読み込みが始まります。
     </div>
- 
+
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
       <div style="font-size:13px; color:var(--grey);">UPCOMING EVENTS</div>
       <div style="display:flex; gap:6px;">
@@ -870,13 +474,13 @@ Copy
         <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ 追加</button>
       </div>
     </div>
- 
+
     <div id="eventList">
       <div class="loading"><div class="spinner"></div>読み込み中...</div>
     </div>
- 
+
   </section>
- 
+
   <!-- ======================== MEMBERS TAB ======================== -->
   <section class="section" id="section-members">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -887,26 +491,26 @@ Copy
       <div class="loading"><div class="spinner"></div>読み込み中...</div>
     </div>
   </section>
- 
+
   <!-- ======================== SETTINGS TAB ======================== -->
   <section class="section" id="section-settings">
     <div class="card">
       <div class="card-title">APP SETTINGS</div>
- 
+
       <div class="form-group">
         <label>チーム名</label>
         <input type="text" id="settingTeamName" placeholder="例: 有志サッカーチーム" />
       </div>
- 
+
       <div class="form-group">
         <label>Google Apps Script URL</label>
         <input type="url" id="settingGasUrl" placeholder="https://script.google.com/macros/s/.../exec" />
         <div style="font-size:11px; color:var(--grey); margin-top:4px;">GASのウェブアプリURLを貼り付けてください</div>
       </div>
- 
+
       <button class="btn btn-primary" onclick="saveSettings()">設定を保存</button>
     </div>
- 
+
     <div class="card" style="margin-top:12px;">
       <div class="card-title">📋 GASセットアップ手順</div>
       <div style="font-size:13px; line-height:1.9; color:#374151;">
@@ -923,11 +527,11 @@ Copy
       </div>
     </div>
   </section>
- 
+
 </main>
- 
+
 <!-- ==================== MODALS ==================== -->
- 
+
 <!-- EVENT MODAL -->
 <div class="overlay" id="eventOverlay">
   <div class="modal">
@@ -977,7 +581,7 @@ Copy
     </div>
   </div>
 </div>
- 
+
 <!-- MEMBER MODAL -->
 <div class="overlay" id="memberOverlay">
   <div class="modal">
@@ -1013,7 +617,7 @@ Copy
     </div>
   </div>
 </div>
- 
+
 <!-- ADMIN MODAL (GAS code) -->
 <div class="overlay" id="gasCodeOverlay">
   <div class="modal">
@@ -1026,7 +630,7 @@ Copy
     </div>
   </div>
 </div>
- 
+
 <!-- ADMIN LOCK MODAL -->
 <div class="overlay" id="adminOverlay">
   <div class="modal">
@@ -1042,10 +646,10 @@ Copy
     </div>
   </div>
 </div>
- 
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
- 
+
 <script>
 // =====================================================
 // STATE
@@ -1059,26 +663,26 @@ let state = {
   editingEventId: null,
   editingMemberId: null,
 };
- 
+
 // GAS CODE TEMPLATE
 const GAS_CODE = `// Google Apps Script - チーム管理アプリ用
 // シート名: events, members, attendance
- 
+
 const SS = SpreadsheetApp.getActiveSpreadsheet();
- 
+
 function doGet(e) {
   return handleRequest(e);
 }
- 
+
 function doPost(e) {
   return handleRequest(e);
 }
- 
+
 function handleRequest(e) {
   const p = e.parameter || {};
   const action = p.action || (e.postData && JSON.parse(e.postData.contents || '{}').action);
   const body = e.postData ? JSON.parse(e.postData.contents || '{}') : p;
- 
+
   let result;
   try {
     switch(body.action || p.action) {
@@ -1093,12 +697,12 @@ function handleRequest(e) {
   } catch(err) {
     result = {error: err.message};
   }
- 
+
   return ContentService
     .createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
 }
- 
+
 function getAll() {
   return {
     events: sheetToArray('events'),
@@ -1106,7 +710,7 @@ function getAll() {
     attendance: sheetToArray('attendance'),
   };
 }
- 
+
 function sheetToArray(name) {
   const sh = getOrCreateSheet(name);
   const data = sh.getDataRange().getValues();
@@ -1118,7 +722,7 @@ function sheetToArray(name) {
     return obj;
   });
 }
- 
+
 function getOrCreateSheet(name) {
   let sh = SS.getSheetByName(name);
   if (!sh) {
@@ -1132,7 +736,7 @@ function getOrCreateSheet(name) {
   }
   return sh;
 }
- 
+
 function saveEvent(data) {
   const sh = getOrCreateSheet('events');
   const rows = sh.getDataRange().getValues();
@@ -1149,7 +753,7 @@ function saveEvent(data) {
   }
   return {ok: true, id};
 }
- 
+
 function saveMember(data) {
   const sh = getOrCreateSheet('members');
   const rows = sh.getDataRange().getValues();
@@ -1164,7 +768,7 @@ function saveMember(data) {
   }
   return {ok: true, id};
 }
- 
+
 function setAttendance(data) {
   const sh = getOrCreateSheet('attendance');
   const rows = sh.getDataRange().getValues();
@@ -1178,7 +782,7 @@ function setAttendance(data) {
   }
   return {ok: true};
 }
- 
+
 function deleteRow(sheetName, id) {
   const sh = getOrCreateSheet(sheetName);
   const rows = sh.getDataRange().getValues();
@@ -1187,7 +791,7 @@ function deleteRow(sheetName, id) {
   return {ok: true};
 }
 `;
- 
+
 // =====================================================
 // INIT
 // =====================================================
@@ -1202,7 +806,7 @@ function init() {
   document.getElementById('settingTeamName').value = state.teamName;
   document.getElementById('settingGasUrl').value = state.gasUrl;
   document.getElementById('gasCodeText').value = GAS_CODE;
- 
+
   if (!state.gasUrl) {
     document.getElementById('configNotice').style.display = 'block';
     renderEvents();
@@ -1211,7 +815,7 @@ function init() {
     loadData();
   }
 }
- 
+
 // =====================================================
 // API
 // =====================================================
@@ -1235,7 +839,7 @@ async function gasRequest(body) {
     }
   }
 }
- 
+
 async function loadData() {
   showToast('データを読み込み中...');
   const data = await gasRequest({action: 'getAll'});
@@ -1247,7 +851,7 @@ async function loadData() {
   renderMembers();
   showToast('更新しました');
 }
- 
+
 // =====================================================
 // TABS
 // =====================================================
@@ -1257,14 +861,14 @@ function showTab(name) {
   document.getElementById('section-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
 }
- 
+
 // =====================================================
 // EVENTS
 // =====================================================
 const TYPE_LABELS = {match:'試合', practice:'練習', tournament:'大会', other:'その他'};
 const TYPE_CLASSES = {match:'badge-match', practice:'badge-practice', tournament:'badge-tournament', other:'badge-other'};
 const WEEKDAYS = ['日','月','火','水','木','金','土'];
- 
+
 function renderEvents() {
   const container = document.getElementById('eventList');
   const sorted = [...state.events].sort((a,b) => a.date < b.date ? -1 : 1);
@@ -1273,7 +877,7 @@ function renderEvents() {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">—</div><p>イベントがまだありません<br>「＋ 追加」で登録しましょう</p></div>`;
     return;
   }
- 
+
   container.innerHTML = sorted.map(ev => {
     const d = new Date(ev.date);
     const month = (d.getMonth()+1) + '月';
@@ -1321,7 +925,7 @@ function renderEvents() {
             ${renderPlayerCards(evIdSafe)}
           </div>
         </div>
- 
+
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
           <button class="btn btn-ghost btn-sm" onclick="toggleEvent('${evIdSafe}')">閉じる</button>
           <button class="btn btn-ghost btn-sm" onclick="openEventModal('${evIdSafe}')">編集</button>
@@ -1330,7 +934,7 @@ function renderEvents() {
     </div>`;
   }).join('');
 }
- 
+
 function toggleEvent(id) {
   const el = document.getElementById('evitem-' + id);
   el.classList.toggle('expanded');
@@ -1339,7 +943,7 @@ function toggleEvent(id) {
     c.style.transform = el.classList.contains('expanded') ? 'rotate(90deg)' : '';
   });
 }
- 
+
 function getAttendanceSummary(eventId) {
   const total = state.members.length;
   const eventAtt = state.attendance.filter(a => a.eventId == eventId);
@@ -1348,7 +952,7 @@ function getAttendanceSummary(eventId) {
   const pending = total - ok - ng;
   return {ok, ng, pending};
 }
- 
+
 function renderPlayerCards(eventId) {
   if (state.members.length === 0) return '<div style="font-size:12px;color:var(--grey);">メンバーが登録されていません</div>';
   const rows = state.members.map(m => {
@@ -1379,23 +983,23 @@ function renderPlayerCards(eventId) {
     <tbody>${rows}</tbody>
   </table>`;
 }
- 
+
 async function saveComment(eventId, memberId, comment) {
   const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
   if (att) att.comment = comment;
   else state.attendance.push({eventId, memberId, status: 'pending', comment});
   gasRequest({action: 'setAttendance', eventId, memberId, status: att ? att.status : 'pending', comment});
 }
- 
+
 async function setAttendanceUI(eventId, memberId, status) {
   const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
   if (att) att.status = status;
   else state.attendance.push({eventId, memberId, status});
- 
+
   // partial re-render: just the grid and summary, don't collapse
   const grid = document.getElementById('playergrid-' + eventId);
   if (grid) grid.innerHTML = renderPlayerCards(eventId);
- 
+
   // update summary counts in the item
   const att2 = getAttendanceSummary(eventId);
   const item = document.getElementById('evitem-' + eventId);
@@ -1407,10 +1011,10 @@ async function setAttendanceUI(eventId, memberId, status) {
     const headerSummary = item.querySelector('.event-info span[style]');
     if (headerSummary) headerSummary.textContent = `${att2.ok}参加 ${att2.ng}欠席 ${att2.pending}未定`;
   }
- 
+
   gasRequest({action: 'setAttendance', eventId, memberId, status});
 }
- 
+
 // =====================================================
 // EVENT MODAL
 // =====================================================
@@ -1430,7 +1034,7 @@ function openEventModal(id) {
   document.getElementById('eventOverlay').classList.add('show');
 }
 function closeEventModal() { document.getElementById('eventOverlay').classList.remove('show'); }
- 
+
 async function saveEvent() {
   const data = {
     action: 'saveEvent',
@@ -1454,7 +1058,7 @@ async function saveEvent() {
   showToast('保存しました');
   await gasRequest(data);
 }
- 
+
 async function deleteEvent() {
   if (!confirm('このイベントを削除しますか？')) return;
   const id = document.getElementById('eventId').value;
@@ -1465,7 +1069,7 @@ async function deleteEvent() {
   showToast('削除しました');
   await gasRequest({action: 'deleteEvent', id});
 }
- 
+
 // =====================================================
 // MEMBERS
 // =====================================================
@@ -1485,7 +1089,7 @@ function renderMembers() {
     </div>
   `).join('');
 }
- 
+
 function openMemberModal(id) {
   const m = id ? state.members.find(m => m.id == id) : null;
   document.getElementById('memberId').value = m ? m.id : '';
@@ -1496,7 +1100,7 @@ function openMemberModal(id) {
   document.getElementById('memberOverlay').classList.add('show');
 }
 function closeMemberModal() { document.getElementById('memberOverlay').classList.remove('show'); }
- 
+
 async function saveMember() {
   const data = {
     action: 'saveMember',
@@ -1514,7 +1118,7 @@ async function saveMember() {
   showToast('保存しました');
   await gasRequest(data);
 }
- 
+
 async function deleteMember() {
   if (!confirm('このメンバーを削除しますか？')) return;
   const id = document.getElementById('memberId').value;
@@ -1524,7 +1128,7 @@ async function deleteMember() {
   showToast('削除しました');
   await gasRequest({action: 'deleteMember', id});
 }
- 
+
 // =====================================================
 // SETTINGS
 // =====================================================
@@ -1539,7 +1143,7 @@ function saveSettings() {
     loadData();
   }
 }
- 
+
 // =====================================================
 // ADMIN
 // =====================================================
@@ -1549,7 +1153,7 @@ function enterAdmin() {
   closeAdminModal();
   showTab('settings');
 }
- 
+
 function showGasCode() {
   document.getElementById('gasCodeOverlay').classList.add('show');
 }
@@ -1557,7 +1161,7 @@ function closeGasCodeModal() { document.getElementById('gasCodeOverlay').classLi
 function copyGasCode() {
   navigator.clipboard.writeText(GAS_CODE).then(() => showToast('コピーしました'));
 }
- 
+
 // =====================================================
 // TOAST
 // =====================================================
@@ -1569,14 +1173,14 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
- 
+
 // =====================================================
 // OVERLAY CLOSE ON BG CLICK
 // =====================================================
 document.querySelectorAll('.overlay').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('show'); });
 });
- 
+
 // =====================================================
 // START
 // =====================================================
@@ -1584,4 +1188,3 @@ init();
 </script>
 </body>
 </html>
- 

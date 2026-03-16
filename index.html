@@ -799,7 +799,7 @@ function init() {
   const saved = localStorage.getItem('soccerTeamConfig');
   if (saved) {
     const cfg = JSON.parse(saved);
-    state.gasUrl = cfg.gasUrl || '';
+    state.gasUrl = cfg.gasUrl || 'https://script.google.com/macros/s/AKfycbweXnjIe-dPAC6DLwJA-fX3Ndg1vKFeQoWuJ1ZEq229XVJ9fDZTzvHsPqR8xWAbIV07/exec';
     state.teamName = cfg.teamName || 'FC TESORO';
   }
   // teamName display removed - static in header
@@ -807,12 +807,13 @@ function init() {
   document.getElementById('settingGasUrl').value = state.gasUrl;
   document.getElementById('gasCodeText').value = GAS_CODE;
 
-  if (!state.gasUrl) {
+  if (state.gasUrl) {
+    document.getElementById('configNotice').style.display = 'none';
+    loadData();
+  } else {
     document.getElementById('configNotice').style.display = 'block';
     renderEvents();
     renderMembers();
-  } else {
-    loadData();
   }
 }
 

@@ -482,7 +482,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver01</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver02</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>
@@ -882,7 +882,7 @@ async function loadData() {
   showToast('データを読み込み中...');
   const data = await gasRequest({action: 'getAll'});
   if (!data) return;
-  state.events = data.events || [];
+  state.events = (data.events || []).map(e => ({ ...e, date: normalizeDate(e.date) }));
   state.members = data.members || [];
   state.attendance = data.attendance || [];
   renderMonthFilter();
@@ -1105,12 +1105,20 @@ async function setAttendanceUI(eventId, memberId, status) {
 // =====================================================
 // EVENT MODAL
 // =====================================================
+function normalizeDate(d) {
+  if (!d) return '';
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const dt = new Date(d);
+  if (isNaN(dt)) return String(d);
+  return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+}
+
 function openEventModal(id) {
   state.editingEventId = id || null;
   const ev = id ? state.events.find(e => e.id == id) : null;
   document.getElementById('eventModalTitle').textContent = ev ? 'イベント編集' : '📅 イベント追加';
   document.getElementById('eventId').value = ev ? ev.id : '';
-  document.getElementById('eventDate').value = ev ? ev.date : '';
+  document.getElementById('eventDate').value = ev ? normalizeDate(ev.date) : '';
   document.getElementById('eventType').value = ev ? ev.type : 'practice';
   document.getElementById('eventTitle').value = ev ? ev.title : '';
   document.getElementById('eventLocation').value = ev ? ev.location : '';

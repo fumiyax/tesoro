@@ -213,7 +213,7 @@
   .att-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .att-table th {
     text-align: center;
-    padding: 8px 8px;
+    padding: 6px 4px;
     font-size: 10px;
     color: var(--gold);
     border-bottom: 1px solid var(--gold-dark);
@@ -221,24 +221,28 @@
     letter-spacing: 1px;
     text-transform: uppercase;
   }
-  .att-table th.name-col { text-align: left; }
+  .att-table th.name-col { text-align: left; width: 60px; white-space: nowrap; }
+  .att-table th.status-col { width: 90px; white-space: nowrap; }
+  .att-table th.comment-th { text-align: left; }
   .att-table td {
-    padding: 8px 8px;
+    padding: 6px 4px;
     border-bottom: 1px solid var(--border);
     text-align: center;
     vertical-align: middle;
   }
-  .att-table td.name-col { text-align: left; font-weight: 600; font-size: 13px; color: var(--white); }
+  .att-table td.name-col { text-align: left; font-weight: 600; font-size: 12px; color: var(--white); white-space: nowrap; }
+  .att-table td.status-col { white-space: nowrap; }
   .att-table tr.row-ok { background: rgba(46,204,113,0.05); }
   .att-table tr.row-ng { background: rgba(192,57,43,0.05); }
   .att-table tr:last-child td { border-bottom: none; }
+  .status-btns { display: inline-flex; gap: 3px; }
   .att-btn {
-    width: 34px;
-    height: 28px;
+    width: 28px;
+    height: 26px;
     border-radius: 3px;
     border: 1px solid var(--border);
     background: var(--black3);
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     transition: all 0.15s;
     line-height: 1;
@@ -250,11 +254,10 @@
   .att-btn.selected-ng { border-color: #e74c3c; background: rgba(231,76,60,0.15); box-shadow: 0 0 0 1px #e74c3c60; }
   .att-btn.selected-pending { border-color: var(--grey); background: rgba(136,136,136,0.1); }
   .att-btn:hover { transform: scale(1.1); border-color: var(--gold); }
-  .comment-th { text-align: left; min-width: 120px; }
-  .comment-col { min-width: 120px; }
+  .comment-col { text-align: left !important; }
   .comment-input {
     width: 100%;
-    padding: 5px 8px;
+    padding: 4px 6px;
     border: 1px solid var(--border);
     border-radius: 3px;
     font-size: 12px;
@@ -262,6 +265,11 @@
     color: var(--white);
     background: var(--black3);
     transition: border-color 0.2s;
+    resize: none;
+    overflow: hidden;
+    min-height: 26px;
+    line-height: 1.4;
+    display: block;
   }
   .comment-input::placeholder { color: #555; }
   .comment-input:focus { outline: none; border-color: var(--gold-dark); }
@@ -1001,6 +1009,11 @@ function toggleEvent(id) {
   chevrons.forEach(c => {
     c.style.transform = el.classList.contains('expanded') ? 'rotate(90deg)' : '';
   });
+  if (el.classList.contains('expanded')) {
+    setTimeout(() => {
+      el.querySelectorAll('.comment-input').forEach(ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
+    }, 10);
+  }
 }
 
 function getAttendanceSummary(eventId) {
@@ -1021,22 +1034,23 @@ function renderPlayerCards(eventId) {
     const rowClass = status === 'ok' ? 'row-ok' : status === 'ng' ? 'row-ng' : '';
     return `<tr class="${rowClass}">
       <td class="name-col">${m.name}</td>
-      <td><button class="att-btn ${status === 'ok' ? 'selected-ok' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ok')">○</button></td>
-      <td><button class="att-btn ${status === 'ng' ? 'selected-ng' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ng')">×</button></td>
-      <td><button class="att-btn ${status === 'pending' ? 'selected-pending' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','pending')">?</button></td>
+      <td class="status-col"><div class="status-btns">
+        <button class="att-btn ${status === 'ok' ? 'selected-ok' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ok')">○</button>
+        <button class="att-btn ${status === 'ng' ? 'selected-ng' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ng')">×</button>
+        <button class="att-btn ${status === 'pending' ? 'selected-pending' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','pending')">?</button>
+      </div></td>
       <td class="comment-col">
-        <input type="text" class="comment-input" placeholder="コメント..." value="${comment.replace(/"/g,'&quot;')}"
+        <textarea class="comment-input" placeholder="コメント..." rows="1"
           onchange="saveComment('${eventId}','${m.id}',this.value)"
-          onclick="event.stopPropagation()" />
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+          onclick="event.stopPropagation()">${comment.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
       </td>
     </tr>`;
   }).join('');
   return `<table class="att-table">
     <thead><tr>
       <th class="name-col">名前</th>
-      <th>参加</th>
-      <th>欠席</th>
-      <th>未定</th>
+      <th class="status-col">出欠</th>
       <th class="comment-th">コメント</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -1057,7 +1071,10 @@ async function setAttendanceUI(eventId, memberId, status) {
 
   // partial re-render: just the grid and summary, don't collapse
   const grid = document.getElementById('playergrid-' + eventId);
-  if (grid) grid.innerHTML = renderPlayerCards(eventId);
+  if (grid) {
+    grid.innerHTML = renderPlayerCards(eventId);
+    grid.querySelectorAll('.comment-input').forEach(ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
+  }
 
   // update summary counts in the item
   const att2 = getAttendanceSummary(eventId);

@@ -482,7 +482,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver03</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver04</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>
@@ -889,6 +889,7 @@ async function loadData() {
   renderEvents();
   renderMembers();
   showToast('更新しました');
+  openEventFromHash();
 }
 
 // =====================================================
@@ -992,11 +993,18 @@ function renderEvents() {
         <div style="color:var(--grey);font-size:20px;padding-right:4px;transition:transform 0.2s;" class="chevron-${evIdSafe}">›</div>
       </div>
       <div class="event-detail">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <button class="btn btn-ghost btn-sm" onclick="toggleEvent('${evIdSafe}')">閉じる</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="copyEventLink('${evIdSafe}')">リンクをコピー</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEventModal('${evIdSafe}')">編集</button>
+          </div>
+        </div>
         ${ev.location ? `<div class="event-detail-row"><span class="event-detail-label">場所</span><span class="event-detail-value">${ev.location}</span></div>` : ''}
         ${ev.time ? `<div class="event-detail-row"><span class="event-detail-label">時間</span><span class="event-detail-value">${ev.time}</span></div>` : ''}
         ${ev.fileUrl ? `<div class="event-detail-row"><span class="event-detail-label">資料</span><span class="event-detail-value"><a href="${ev.fileUrl}" target="_blank" rel="noopener">Google Drive で開く</a></span></div>` : ''}
         ${ev.note ? `<div class="event-detail-row"><span class="event-detail-label">メモ</span><span class="event-detail-value">${ev.note}</span></div>` : ''}
-        
+
         <div class="attendance-section">
           <div class="attendance-title">参加確認</div>
           <div class="attendance-summary">
@@ -1007,11 +1015,6 @@ function renderEvents() {
           <div id="playergrid-${evIdSafe}">
             ${renderPlayerCards(evIdSafe)}
           </div>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
-          <button class="btn btn-ghost btn-sm" onclick="toggleEvent('${evIdSafe}')">閉じる</button>
-          <button class="btn btn-ghost btn-sm" onclick="openEventModal('${evIdSafe}')">編集</button>
         </div>
       </div>
     </div>`;
@@ -1266,6 +1269,26 @@ function showToast(msg) {
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// =====================================================
+// EVENT LINK
+// =====================================================
+function copyEventLink(eventId) {
+  const url = location.origin + location.pathname + '#event-' + eventId;
+  navigator.clipboard.writeText(url).then(() => showToast('リンクをコピーしました'));
+}
+
+function openEventFromHash() {
+  const hash = location.hash;
+  if (hash && hash.startsWith('#event-')) {
+    const eventId = hash.replace('#event-', '');
+    const el = document.getElementById('evitem-' + eventId);
+    if (el) {
+      if (!el.classList.contains('expanded')) toggleEvent(eventId);
+      setTimeout(() => el.scrollIntoView({behavior: 'smooth', block: 'start'}), 100);
+    }
+  }
 }
 
 // =====================================================

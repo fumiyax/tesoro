@@ -482,7 +482,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver02</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver03</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>
@@ -946,7 +946,12 @@ function renderEvents() {
   const sorted = [...state.events]
     .filter(ev => {
       if (new Date(ev.date) < today) return false;
-      if (state.selectedMonth && !ev.date.startsWith(state.selectedMonth)) return false;
+      if (state.selectedMonth) {
+        if (!ev.date.startsWith(state.selectedMonth)) return false;
+      } else {
+        // 「すべて」の場合は試合・練習・大会のみ表示
+        if (!['match', 'practice', 'tournament'].includes(ev.type)) return false;
+      }
       return true;
     })
     .sort((a,b) => a.date < b.date ? -1 : 1);

@@ -304,10 +304,16 @@
   select option { background: var(--black3); }
   textarea { resize: vertical; min-height: 70px; }
 
-  /* カレンダーアイコンを明るく */
+  /* カレンダーアイコンを金色で目立たせる */
   input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.5);
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(10deg);
+    opacity: 1;
     cursor: pointer;
+    width: 20px;
+    height: 20px;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(10deg) brightness(1.2);
   }
 
   .btn {
@@ -488,7 +494,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver06</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver07</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>

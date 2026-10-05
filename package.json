@@ -1,0 +1,14 @@
+{
+  "name": "tesoro",
+  "version": "5.0.0",
+  "description": "FC TESORO Schedule Management System",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.0"
+  }
+}

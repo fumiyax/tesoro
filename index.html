@@ -482,7 +482,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver04</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver05</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>
@@ -548,18 +548,14 @@
     </div>
 
     <div class="card" style="margin-top:12px;">
-      <div class="card-title">📋 GASセットアップ手順</div>
+      <div class="card-title">ℹ️ システム情報</div>
       <div style="font-size:13px; line-height:1.9; color:#374151;">
-        <b>1.</b> Google スプレッドシートを新規作成<br>
-        <b>2.</b> シート名を以下の通りにする：<br>
+        <b>バックエンド:</b> Vercel + Neon Database (PostgreSQL)<br>
+        <b>データ構成:</b><br>
         &emsp;<code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:12px;">events</code>（日程）<br>
         &emsp;<code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:12px;">members</code>（メンバー）<br>
         &emsp;<code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:12px;">attendance</code>（参加状況）<br>
-        <b>3.</b> 「拡張機能」→「Apps Script」を開く<br>
-        <b>4.</b> <a href="#" onclick="showGasCode()" style="color:var(--green);">GASコード</a>をコピーして貼り付ける<br>
-        <b>5.</b> 「デプロイ」→「新しいデプロイ」→ウェブアプリ<br>
-        &emsp;アクセス：「全員」に設定してURLをコピー<br>
-        <b>6.</b> 上の「GAS URL」欄に貼り付けて保存
+        <b>デプロイ:</b> GitHub → Vercel 自動デプロイ
       </div>
     </div>
   </section>
@@ -654,19 +650,6 @@
   </div>
 </div>
 
-<!-- ADMIN MODAL (GAS code) -->
-<div class="overlay" id="gasCodeOverlay">
-  <div class="modal">
-    <div class="modal-title">GAS CODE</div>
-    <p style="font-size:12px; color:var(--grey); margin-bottom:10px;">以下をGoogle Apps Scriptに貼り付けてください</p>
-    <textarea id="gasCodeText" style="font-family:monospace; font-size:11px; height:300px; white-space:pre;" readonly></textarea>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeGasCodeModal()">閉じる</button>
-      <button class="btn btn-primary" onclick="copyGasCode()">コピー</button>
-    </div>
-  </div>
-</div>
-
 <!-- ADMIN LOCK MODAL -->
 <div class="overlay" id="adminOverlay">
   <div class="modal">
@@ -702,141 +685,14 @@ let state = {
 };
 
 // GAS CODE TEMPLATE
-const GAS_CODE = `// Google Apps Script - チーム管理アプリ用
-// シート名: events, members, attendance
-
-const SS = SpreadsheetApp.getActiveSpreadsheet();
-
-function doGet(e) {
-  return handleRequest(e);
-}
-
-function doPost(e) {
-  return handleRequest(e);
-}
-
-function handleRequest(e) {
-  const p = e.parameter || {};
-  const action = p.action || (e.postData && JSON.parse(e.postData.contents || '{}').action);
-  const body = e.postData ? JSON.parse(e.postData.contents || '{}') : p;
-
-  let result;
-  try {
-    switch(body.action || p.action) {
-      case 'getAll': result = getAll(); break;
-      case 'saveEvent': result = saveEvent(body); break;
-      case 'deleteEvent': result = deleteRow('events', body.id); break;
-      case 'saveMember': result = saveMember(body); break;
-      case 'deleteMember': result = deleteRow('members', body.id); break;
-      case 'setAttendance': result = setAttendance(body); break;
-      default: result = {error: 'unknown action'};
-    }
-  } catch(err) {
-    result = {error: err.message};
-  }
-
-  return ContentService
-    .createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function getAll() {
-  return {
-    events: sheetToArray('events'),
-    members: sheetToArray('members'),
-    attendance: sheetToArray('attendance'),
-  };
-}
-
-function sheetToArray(name) {
-  const sh = getOrCreateSheet(name);
-  const data = sh.getDataRange().getValues();
-  if (data.length < 2) return [];
-  const headers = data[0];
-  return data.slice(1).map(row => {
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
-  });
-}
-
-function getOrCreateSheet(name) {
-  let sh = SS.getSheetByName(name);
-  if (!sh) {
-    sh = SS.insertSheet(name);
-    const headers = {
-      events: ['id','date','type','title','location','time','fileUrl','note'],
-      members: ['id','name','grade','parent'],
-      attendance: ['eventId','memberId','status','comment'],
-    };
-    sh.appendRow(headers[name] || ['id']);
-  }
-  return sh;
-}
-
-function saveEvent(data) {
-  const sh = getOrCreateSheet('events');
-  const rows = sh.getDataRange().getValues();
-  const headers = rows[0];
-  const id = data.id || new Date().getTime().toString();
-  const row = [id, data.date, data.type, data.title, data.location, data.time, data.fileUrl, data.note];
-  
-  // find existing
-  const existing = rows.slice(1).findIndex(r => r[0] == id);
-  if (existing >= 0) {
-    sh.getRange(existing + 2, 1, 1, row.length).setValues([row]);
-  } else {
-    sh.appendRow(row);
-  }
-  return {ok: true, id};
-}
-
-function saveMember(data) {
-  const sh = getOrCreateSheet('members');
-  const rows = sh.getDataRange().getValues();
-  const id = data.id || new Date().getTime().toString();
-  const row = [id, data.name, data.grade, data.parent];
-  
-  const existing = rows.slice(1).findIndex(r => r[0] == id);
-  if (existing >= 0) {
-    sh.getRange(existing + 2, 1, 1, row.length).setValues([row]);
-  } else {
-    sh.appendRow(row);
-  }
-  return {ok: true, id};
-}
-
-function setAttendance(data) {
-  const sh = getOrCreateSheet('attendance');
-  const rows = sh.getDataRange().getValues();
-  
-  const existing = rows.slice(1).findIndex(r => r[0] == data.eventId && r[1] == data.memberId);
-  if (existing >= 0) {
-    sh.getRange(existing + 2, 3).setValue(data.status);
-    sh.getRange(existing + 2, 4).setValue(data.comment || '');
-  } else {
-    sh.appendRow([data.eventId, data.memberId, data.status, data.comment || '']);
-  }
-  return {ok: true};
-}
-
-function deleteRow(sheetName, id) {
-  const sh = getOrCreateSheet(sheetName);
-  const rows = sh.getDataRange().getValues();
-  const idx = rows.slice(1).findIndex(r => r[0] == id);
-  if (idx >= 0) sh.deleteRow(idx + 2);
-  return {ok: true};
-}
-`;
-
 // =====================================================
 // INIT
 // =====================================================
-const HARDCODED_GAS_URL = 'https://script.google.com/macros/s/AKfycbweXnjIe-dPAC6DLwJA-fX3Ndg1vKFeQoWuJ1ZEq229XVJ9fDZTzvHsPqR8xWAbIV07/exec';
+// Vercel API Routes
+const API_BASE = '/api';
 
 function init() {
-  // GAS URLは常にハードコードされたものを使う（localStorageを無視）
-  state.gasUrl = HARDCODED_GAS_URL;
+  // Vercel API を使用
 
   const saved = localStorage.getItem('soccerTeamConfig');
   if (saved) {
@@ -847,9 +703,6 @@ function init() {
   const teamNameEl = document.getElementById('settingTeamName');
   if (teamNameEl) teamNameEl.value = state.teamName;
 
-  const gasCodeEl = document.getElementById('gasCodeText');
-  if (gasCodeEl) gasCodeEl.value = GAS_CODE;
-
   document.getElementById('configNotice').style.display = 'none';
   loadData();
 }
@@ -857,30 +710,28 @@ function init() {
 // =====================================================
 // API
 // =====================================================
-async function gasRequest(body) {
-  if (!state.gasUrl) { showToast('GAS URLが設定されていません'); return null; }
+async function apiRequest(endpoint, body = {}) {
   try {
-    const res = await fetch(state.gasUrl, {
+    const res = await fetch(`${API_BASE}/${endpoint}`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    return await res.json();
-  } catch(e) {
-    // fallback for CORS: GET with params
-    try {
-      const params = new URLSearchParams(body);
-      const res = await fetch(`${state.gasUrl}?${params}`);
-      return await res.json();
-    } catch(e2) {
-      showToast('通信エラー: ' + e2.message);
+    const data = await res.json();
+    if (!data.success && data.error) {
+      showToast('エラー: ' + data.error);
       return null;
     }
+    return data;
+  } catch(e) {
+    showToast('通信エラー: ' + e.message);
+    return null;
   }
 }
 
 async function loadData() {
   showToast('データを読み込み中...');
-  const data = await gasRequest({action: 'getAll'});
+  const data = await apiRequest('getAll');
   if (!data) return;
   state.events = (data.events || []).map(e => ({ ...e, date: normalizeDate(e.date) }));
   state.members = data.members || [];
@@ -1080,7 +931,7 @@ async function saveComment(eventId, memberId, comment) {
   const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
   if (att) att.comment = comment;
   else state.attendance.push({eventId, memberId, status: 'pending', comment});
-  gasRequest({action: 'setAttendance', eventId, memberId, status: att ? att.status : 'pending', comment});
+  apiRequest('setAttendance', {eventId, memberId, status: att ? att.status : 'pending', comment});
 }
 
 async function setAttendanceUI(eventId, memberId, status) {
@@ -1107,7 +958,7 @@ async function setAttendanceUI(eventId, memberId, status) {
     if (headerSummary) headerSummary.textContent = `${att2.ok}参加 ${att2.ng}欠席 ${att2.pending}未定`;
   }
 
-  gasRequest({action: 'setAttendance', eventId, memberId, status});
+  apiRequest('setAttendance', {eventId, memberId, status});
 }
 
 // =====================================================
@@ -1140,8 +991,7 @@ function closeEventModal() { document.getElementById('eventOverlay').classList.r
 
 async function saveEvent() {
   const data = {
-    action: 'saveEvent',
-    id: document.getElementById('eventId').value || new Date().getTime().toString(),
+    id: document.getElementById('eventId').value || '',
     date: document.getElementById('eventDate').value,
     type: document.getElementById('eventType').value,
     title: document.getElementById('eventTitle').value,
@@ -1151,26 +1001,25 @@ async function saveEvent() {
     note: document.getElementById('eventNote').value,
   };
   if (!data.date || !data.title) { showToast('日付とタイトルを入力してください'); return; }
-  
-  // optimistic update
-  const existing = state.events.findIndex(e => e.id == data.id);
-  if (existing >= 0) state.events[existing] = data;
-  else state.events.push(data);
-  renderEvents();
+
+  await apiRequest('saveEvent', data);
+
+  // reload data after save
+  await loadData();
   closeEventModal();
   showToast('保存しました');
-  await gasRequest(data);
 }
 
 async function deleteEvent() {
   if (!confirm('このイベントを削除しますか？')) return;
   const id = document.getElementById('eventId').value;
-  state.events = state.events.filter(e => e.id != id);
-  state.attendance = state.attendance.filter(a => a.eventId != id);
-  renderEvents();
+
+  await apiRequest('deleteEvent', {id});
+
+  // reload data after delete
+  await loadData();
   closeEventModal();
   showToast('削除しました');
-  await gasRequest({action: 'deleteEvent', id});
 }
 
 // =====================================================
@@ -1206,30 +1055,31 @@ function closeMemberModal() { document.getElementById('memberOverlay').classList
 
 async function saveMember() {
   const data = {
-    action: 'saveMember',
-    id: document.getElementById('memberId').value || new Date().getTime().toString(),
+    id: document.getElementById('memberId').value || '',
     name: document.getElementById('memberName').value,
     grade: document.getElementById('memberGrade').value,
     parent: document.getElementById('memberParent').value,
   };
   if (!data.name) { showToast('名前を入力してください'); return; }
-  const existing = state.members.findIndex(m => m.id == data.id);
-  if (existing >= 0) state.members[existing] = data;
-  else state.members.push(data);
-  renderMembers();
+
+  await apiRequest('saveMember', data);
+
+  // reload data after save
+  await loadData();
   closeMemberModal();
   showToast('保存しました');
-  await gasRequest(data);
 }
 
 async function deleteMember() {
   if (!confirm('このメンバーを削除しますか？')) return;
   const id = document.getElementById('memberId').value;
-  state.members = state.members.filter(m => m.id != id);
-  renderMembers();
+
+  await apiRequest('deleteMember', {id});
+
+  // reload data after delete
+  await loadData();
   closeMemberModal();
   showToast('削除しました');
-  await gasRequest({action: 'deleteMember', id});
 }
 
 // =====================================================
@@ -1249,14 +1099,6 @@ function closeAdminModal() { document.getElementById('adminOverlay').classList.r
 function enterAdmin() {
   closeAdminModal();
   showTab('settings');
-}
-
-function showGasCode() {
-  document.getElementById('gasCodeOverlay').classList.add('show');
-}
-function closeGasCodeModal() { document.getElementById('gasCodeOverlay').classList.remove('show'); }
-function copyGasCode() {
-  navigator.clipboard.writeText(GAS_CODE).then(() => showToast('コピーしました'));
 }
 
 // =====================================================

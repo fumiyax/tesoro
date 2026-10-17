@@ -218,6 +218,7 @@
     background: var(--black3);
   }
   .att-count.ok { border-color: rgba(46,204,113,0.4); color: #2ecc71; background: rgba(46,204,113,0.08); }
+  .att-count.maybe { border-color: rgba(241,196,15,0.4); color: #f1c40f; background: rgba(241,196,15,0.08); }
   .att-count.ng { border-color: rgba(192,57,43,0.4); color: #e74c3c; background: rgba(192,57,43,0.08); }
   .att-count.pending { border-color: var(--border); color: var(--grey); }
 
@@ -233,7 +234,7 @@
     text-transform: uppercase;
   }
   .att-table th.name-col { text-align: left; width: 60px; white-space: nowrap; }
-  .att-table th.status-col { width: 90px; white-space: nowrap; }
+  .att-table th.status-col { width: 130px; white-space: nowrap; }
   .att-table th.comment-th { text-align: left; }
   .att-table td {
     padding: 6px 4px;
@@ -244,11 +245,12 @@
   .att-table td.name-col { text-align: left; font-weight: 600; font-size: 12px; color: var(--white); white-space: nowrap; }
   .att-table td.status-col { white-space: nowrap; }
   .att-table tr.row-ok { background: rgba(46,204,113,0.05); }
+  .att-table tr.row-maybe { background: rgba(241,196,15,0.05); }
   .att-table tr.row-ng { background: rgba(192,57,43,0.05); }
   .att-table tr:last-child td { border-bottom: none; }
   .status-btns { display: inline-flex; gap: 3px; }
   .att-btn {
-    width: 28px;
+    width: 26px;
     height: 26px;
     border-radius: 3px;
     border: 1px solid var(--border);
@@ -262,6 +264,7 @@
     justify-content: center;
   }
   .att-btn.selected-ok { border-color: #2ecc71; background: rgba(46,204,113,0.15); box-shadow: 0 0 0 1px #2ecc7160; }
+  .att-btn.selected-maybe { border-color: #f1c40f; background: rgba(241,196,15,0.15); box-shadow: 0 0 0 1px #f1c40f60; }
   .att-btn.selected-ng { border-color: #e74c3c; background: rgba(231,76,60,0.15); box-shadow: 0 0 0 1px #e74c3c60; }
   .att-btn.selected-pending { border-color: var(--grey); background: rgba(136,136,136,0.1); }
   .att-btn:hover { transform: scale(1.1); border-color: var(--gold); }
@@ -442,6 +445,7 @@
   /* STATUS PILL */
   .status-pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; margin-left: 6px; }
   .pill-ok { background: rgba(46,204,113,0.15); color: #2ecc71; }
+  .pill-maybe { background: rgba(241,196,15,0.15); color: #f1c40f; }
   .pill-ng { background: rgba(192,57,43,0.15); color: #e74c3c; }
   .pill-pending { background: rgba(255,255,255,0.05); color: var(--grey); }
 
@@ -494,7 +498,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver08</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver09</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>
@@ -849,7 +853,7 @@ function renderEvents() {
           <div style="margin-top:4px;">
             <span class="event-type-badge ${TYPE_CLASSES[ev.type] || 'badge-other'}">${TYPE_LABELS[ev.type] || ev.type}</span>
             <span style="font-size:11px; color:var(--grey);">
-              ${att.ok}参加 ${att.ng}欠席 ${att.pending}未定
+              ${att.ok}◎ ${att.maybe}△ ${att.ng}✗ ${att.pending}？
             </span>
           </div>
         </div>
@@ -871,9 +875,10 @@ function renderEvents() {
         <div class="attendance-section">
           <div class="attendance-title">参加確認</div>
           <div class="attendance-summary">
-            <div class="att-count ok">参加 ${att.ok}人</div>
-            <div class="att-count ng">欠席 ${att.ng}人</div>
-            <div class="att-count pending">未回答 ${att.pending}人</div>
+            <div class="att-count ok">◎ ${att.ok}人</div>
+            <div class="att-count maybe">△ ${att.maybe}人</div>
+            <div class="att-count ng">✗ ${att.ng}人</div>
+            <div class="att-count pending">？ ${att.pending}人</div>
           </div>
           <div id="playergrid-${evIdSafe}">
             ${renderPlayerCards(evIdSafe)}
@@ -902,9 +907,10 @@ function getAttendanceSummary(eventId) {
   const total = state.members.length;
   const eventAtt = state.attendance.filter(a => a.eventId == eventId);
   const ok = eventAtt.filter(a => a.status === 'ok').length;
+  const maybe = eventAtt.filter(a => a.status === 'maybe').length;
   const ng = eventAtt.filter(a => a.status === 'ng').length;
-  const pending = total - ok - ng;
-  return {ok, ng, pending};
+  const pending = total - ok - maybe - ng;
+  return {ok, maybe, ng, pending};
 }
 
 function renderPlayerCards(eventId) {
@@ -913,14 +919,22 @@ function renderPlayerCards(eventId) {
     const att = state.attendance.find(a => a.eventId == eventId && a.memberId == m.id);
     const status = att ? att.status : 'pending';
     const comment = att ? (att.comment || '') : '';
-    const rowClass = status === 'ok' ? 'row-ok' : status === 'ng' ? 'row-ng' : '';
+    const carpoolRequest = att ? (att.carpoolRequest || false) : false;
+    const rowClass = status === 'ok' ? 'row-ok' : status === 'maybe' ? 'row-maybe' : status === 'ng' ? 'row-ng' : '';
     return `<tr class="${rowClass}">
       <td class="name-col">${m.name}</td>
       <td class="status-col"><div class="status-btns">
-        <button class="att-btn ${status === 'ok' ? 'selected-ok' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ok')">○</button>
-        <button class="att-btn ${status === 'ng' ? 'selected-ng' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ng')">×</button>
-        <button class="att-btn ${status === 'pending' ? 'selected-pending' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','pending')">?</button>
+        <button class="att-btn ${status === 'ok' ? 'selected-ok' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ok')">◎</button>
+        <button class="att-btn ${status === 'maybe' ? 'selected-maybe' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','maybe')">△</button>
+        <button class="att-btn ${status === 'ng' ? 'selected-ng' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','ng')">✗</button>
+        <button class="att-btn ${status === 'pending' ? 'selected-pending' : ''}" onclick="setAttendanceUI('${eventId}','${m.id}','pending')">？</button>
       </div></td>
+      <td style="text-align:center; padding:6px 4px;">
+        <input type="checkbox" id="carpool-${eventId}-${m.id}" ${carpoolRequest ? 'checked' : ''}
+          onchange="saveCarpoolRequest('${eventId}','${m.id}',this.checked)"
+          onclick="event.stopPropagation()"
+          style="width:16px;height:16px;cursor:pointer;" />
+      </td>
       <td class="comment-col">
         <textarea class="comment-input" placeholder="コメント..." rows="1"
           onchange="saveComment('${eventId}','${m.id}',this.value)"
@@ -933,6 +947,7 @@ function renderPlayerCards(eventId) {
     <thead><tr>
       <th class="name-col">名前</th>
       <th class="status-col">出欠</th>
+      <th style="width:60px;text-align:center;">相乗り</th>
       <th class="comment-th">コメント</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -941,15 +956,43 @@ function renderPlayerCards(eventId) {
 
 async function saveComment(eventId, memberId, comment) {
   const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
-  if (att) att.comment = comment;
-  else state.attendance.push({eventId, memberId, status: 'pending', comment});
-  apiRequest('setAttendance', {eventId, memberId, status: att ? att.status : 'pending', comment});
+  if (att) {
+    att.comment = comment;
+  } else {
+    state.attendance.push({eventId, memberId, status: 'pending', comment, carpoolRequest: false});
+  }
+  apiRequest('setAttendance', {
+    eventId,
+    memberId,
+    status: att ? att.status : 'pending',
+    comment,
+    carpoolRequest: att ? att.carpoolRequest : false
+  });
+}
+
+async function saveCarpoolRequest(eventId, memberId, carpoolRequest) {
+  const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
+  if (att) {
+    att.carpoolRequest = carpoolRequest;
+  } else {
+    state.attendance.push({eventId, memberId, status: 'pending', comment: '', carpoolRequest});
+  }
+  apiRequest('setAttendance', {
+    eventId,
+    memberId,
+    status: att ? att.status : 'pending',
+    comment: att ? att.comment : '',
+    carpoolRequest
+  });
 }
 
 async function setAttendanceUI(eventId, memberId, status) {
   const att = state.attendance.find(a => a.eventId == eventId && a.memberId == memberId);
-  if (att) att.status = status;
-  else state.attendance.push({eventId, memberId, status});
+  if (att) {
+    att.status = status;
+  } else {
+    state.attendance.push({eventId, memberId, status, comment: '', carpoolRequest: false});
+  }
 
   // partial re-render: just the grid and summary, don't collapse
   const grid = document.getElementById('playergrid-' + eventId);
@@ -962,15 +1005,22 @@ async function setAttendanceUI(eventId, memberId, status) {
   const att2 = getAttendanceSummary(eventId);
   const item = document.getElementById('evitem-' + eventId);
   if (item) {
-    item.querySelector('.att-count.ok').textContent = '参加 ' + att2.ok + '人';
-    item.querySelector('.att-count.ng').textContent = '欠席 ' + att2.ng + '人';
-    item.querySelector('.att-count.pending').textContent = '未回答 ' + att2.pending + '人';
+    item.querySelector('.att-count.ok').textContent = '◎ ' + att2.ok + '人';
+    item.querySelector('.att-count.maybe').textContent = '△ ' + att2.maybe + '人';
+    item.querySelector('.att-count.ng').textContent = '✗ ' + att2.ng + '人';
+    item.querySelector('.att-count.pending').textContent = '？ ' + att2.pending + '人';
     // update header summary too
     const headerSummary = item.querySelector('.event-info span[style]');
-    if (headerSummary) headerSummary.textContent = `${att2.ok}参加 ${att2.ng}欠席 ${att2.pending}未定`;
+    if (headerSummary) headerSummary.textContent = `${att2.ok}◎ ${att2.maybe}△ ${att2.ng}✗ ${att2.pending}？`;
   }
 
-  apiRequest('setAttendance', {eventId, memberId, status});
+  apiRequest('setAttendance', {
+    eventId,
+    memberId,
+    status,
+    comment: att ? att.comment : '',
+    carpoolRequest: att ? att.carpoolRequest : false
+  });
 }
 
 // =====================================================

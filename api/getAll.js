@@ -46,7 +46,8 @@ export default async function handler(req, res) {
       eventId: a.eventid,
       memberId: a.memberid,
       status: a.status,
-      comment: a.comment
+      comment: a.comment,
+      carpoolRequest: a.carpool_request || false
     }));
 
     return res.status(200).json({

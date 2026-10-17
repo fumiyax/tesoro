@@ -498,7 +498,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver10</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver11</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>
@@ -1197,8 +1197,25 @@ function addToGoogleCalendar(eventId) {
   // 日付を YYYYMMDD 形式に変換
   const dateStr = event.date.replace(/-/g, '');
 
-  // 終日イベントとして登録
-  const dates = `${dateStr}/${dateStr}`;
+  // 時刻をパース（例: "09:00〜12:00" → {start: "0900", end: "1200"}）
+  let dates;
+  if (event.time) {
+    const timeMatch = event.time.match(/(\d{1,2}):(\d{2})[〜~\-～](\d{1,2}):(\d{2})/);
+    if (timeMatch) {
+      const startHour = timeMatch[1].padStart(2, '0');
+      const startMin = timeMatch[2];
+      const endHour = timeMatch[3].padStart(2, '0');
+      const endMin = timeMatch[4];
+      // 時刻付きイベント（YYYYMMDDTHHMMSSのローカル時刻形式）
+      dates = `${dateStr}T${startHour}${startMin}00/${dateStr}T${endHour}${endMin}00`;
+    } else {
+      // パースできない場合は終日イベント
+      dates = `${dateStr}/${dateStr}`;
+    }
+  } else {
+    // 時刻が未入力の場合は終日イベント
+    dates = `${dateStr}/${dateStr}`;
+  }
 
   // 詳細情報を構築
   let details = '';

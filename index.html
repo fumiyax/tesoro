@@ -498,7 +498,7 @@
     <div class="logo">
       <img class="logo-img" src="logo.png" alt="FC TESORO" />
       <div>
-        <div class="logo-text">FC TESORO <span class="badge-ver">ver09</span></div>
+        <div class="logo-text">FC TESORO <span class="badge-ver">ver10</span></div>
         <div class="logo-sub">SCHEDULE</div>
       </div>
     </div>
@@ -863,6 +863,7 @@ function renderEvents() {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <button class="btn btn-ghost btn-sm" onclick="toggleEvent('${evIdSafe}')">閉じる</button>
           <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="addToGoogleCalendar('${evIdSafe}')">📅 カレンダーに追加</button>
             <button class="btn btn-ghost btn-sm" onclick="copyEventLink('${evIdSafe}')">リンクをコピー</button>
             <button class="btn btn-ghost btn-sm" onclick="openEventModal('${evIdSafe}')">編集</button>
           </div>
@@ -1181,6 +1182,39 @@ function showToast(msg) {
 function copyEventLink(eventId) {
   const url = location.origin + location.pathname + '#event-' + eventId;
   navigator.clipboard.writeText(url).then(() => showToast('リンクをコピーしました'));
+}
+
+// =====================================================
+// GOOGLE CALENDAR
+// =====================================================
+function addToGoogleCalendar(eventId) {
+  const event = state.events.find(e => e.id == eventId);
+  if (!event) return;
+
+  // タイトル: 【Tesoro】{元のタイトル}
+  const title = encodeURIComponent(`【Tesoro】${event.title || 'イベント'}`);
+
+  // 日付を YYYYMMDD 形式に変換
+  const dateStr = event.date.replace(/-/g, '');
+
+  // 終日イベントとして登録
+  const dates = `${dateStr}/${dateStr}`;
+
+  // 詳細情報を構築
+  let details = '';
+  if (event.time) details += `時間: ${event.time}\n`;
+  if (event.note) details += `\n${event.note}`;
+  if (event.fileUrl) details += `\n\n資料: ${event.fileUrl}`;
+  const encodedDetails = encodeURIComponent(details);
+
+  // 場所
+  const location = encodeURIComponent(event.location || '');
+
+  // Google Calendar URL
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${encodedDetails}&location=${location}`;
+
+  // 新しいタブで開く
+  window.open(calendarUrl, '_blank');
 }
 
 function openEventFromHash() {
